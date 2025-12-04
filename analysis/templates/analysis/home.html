@@ -1,0 +1,56 @@
+{% extends 'analysis/base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center text-center">
+        <div class="col-lg-8">
+            <h1 class="display-4 fw-bold mb-4">MicroGen Variant Explorer</h1>
+            <p class="lead text-muted mb-5">
+                Uma ferramenta poderosa e intuitiva para análise de variantes genômicas bacterianas.
+                Automatize seu Controle de Qualidade, visualize densidade mutacional e anote variantes com facilidade.
+            </p>
+            
+            <div class="d-grid gap-3 d-sm-flex justify-content-sm-center mb-5">
+                <a href="{% url 'analysis_create' %}" class="btn btn-primary btn-lg px-4 gap-3">Nova Análise</a>
+                <a href="{% url 'analysis_list' %}" class="btn btn-outline-secondary btn-lg px-4">Análises Recentes</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title fw-bold">Controle de Qualidade</h5>
+                    <p class="card-text text-muted">Métricas detalhadas de qualidade, contagem de SNPs/INDELs e identificação de variantes de baixa qualidade.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title fw-bold">Visualização Avançada</h5>
+                    <p class="card-text text-muted">Gráficos interativos de distribuição de qualidade e densidade mutacional ao longo do genoma.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title fw-bold">Anotação Funcional</h5>
+                    <p class="card-text text-muted">Integração com arquivos GFF3 para mapear variantes diretamente aos genes afetados.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-5 text-center">
+        <div class="col-12">
+            <div class="alert alert-info" role="alert">
+                <h6 class="alert-heading fw-bold">Informações Úteis</h6>
+                <p class="mb-0">Formatos suportados: <strong>VCF</strong> (v4.0+) e <strong>GFF3</strong>. Certifique-se de que seus arquivos estejam formatados corretamente.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

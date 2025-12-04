@@ -1,0 +1,61 @@
+{% extends 'analysis/base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0">Análises Recentes</h2>
+            <div>
+                <a href="{% url 'home' %}" class="btn btn-outline-secondary me-2">Voltar para Home</a>
+                <a href="{% url 'analysis_create' %}" class="btn btn-primary">Nova Análise</a>
+            </div>
+        </div>
+        {% if analyses %}
+            <div class="card">
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">ID</th>
+                                <th>Nome do Arquivo</th>
+                                <th>Data</th>
+                                <th>Variantes</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for analysis in analyses %}
+                            <tr>
+                                <td class="ps-4">#{{ analysis.id }}</td>
+                                <td>{{ analysis.vcf_file.name|cut:"uploads/vcf/" }}</td>
+                                <td>{{ analysis.created_at|date:"d M, Y H:i" }}</td>
+                                <td>{{ analysis.metrics.total_variants|default:"-" }}</td>
+                                <td>
+                                    {% if analysis.metrics %}
+                                        <span class="badge bg-success">Concluído</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Processando</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'analysis_detail' analysis.pk %}" class="btn btn-sm btn-outline-primary">Ver</a>
+                                        <a href="{% url 'analysis_delete' analysis.pk %}" class="btn btn-sm btn-outline-danger">Excluir</a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <p class="text-muted">Nenhuma análise encontrada. Comece criando uma!</p>
+                <a href="{% url 'analysis_create' %}" class="btn btn-primary">Criar Nova Análise</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
