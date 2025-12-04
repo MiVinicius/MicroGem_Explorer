@@ -1,9 +1,13 @@
-# MicroGen Variant Explorer
+<h1>
+  <img src="assets/logo.png" width="40" style="vertical-align: middle;">
+  MicroGen Explorer
+</h1>
+
 
 **Versão:** 1.0.0
 **Domínio:** Bioinformática / Análise de Dados
 
-O MicroGen Variant Explorer é uma ferramenta baseada em Django projetada para automatizar a análise de dados de variantes de Sequenciamento de Nova Geração (NGS) (arquivos VCF) para genomas bacterianos. Ele fornece métricas de Controle de Qualidade (CQ), análise química genômica (razão Ti/Tv), mapeamento de densidade mutacional e anotação funcional.
+O MicroGen Explorer é uma ferramenta baseada em Django projetada para automatizar a análise de dados de variantes de Sequenciamento de Nova Geração (NGS) (arquivos VCF) para genomas bacterianos. Ele fornece métricas de Controle de Qualidade (CQ), análise química genômica (razão Ti/Tv), mapeamento de densidade mutacional e anotação funcional.
 
 ## Funcionalidades
 
