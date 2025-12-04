@@ -1,5 +1,5 @@
 <h1>
-  <img src="assets/logo.png" width="40" style="vertical-align: middle;">
+  <img src="assets/logo.png" width="60" style="vertical-align: middle;">
   MicroGen Explorer
 </h1>
 
