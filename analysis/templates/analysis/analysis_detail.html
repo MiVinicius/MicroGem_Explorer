@@ -1,5 +1,10 @@
 {% extends 'analysis/base.html' %}
 
+{% block extra_head %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+<script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+{% endblock %}
+
 {% block content %}
 <div class="row mb-4">
     <div class="col-12 d-flex justify-content-between align-items-center">
@@ -54,6 +59,53 @@
     </div>
 </div>
 
+<!-- IGV.js Container -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white">Visualizador de Genoma (IGV.js)</div>
+            <div class="card-body">
+                <div id="igv-div"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/igv@2.15.5/dist/igv.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var igvDiv = document.getElementById("igv-div");
+        var options = {
+            locus: "all",
+            tracks: [
+                {
+                    name: "Variantes",
+                    url: "{{ analysis.vcf_file.url }}",
+                    format: "vcf",
+                    type: "variant",
+                    indexed: false 
+                }
+            ]
+        };
+
+        {% if analysis.reference_file %}
+            options.reference = {
+                "id": "custom_ref",
+                "fastaURL": "{{ analysis.reference_file.url }}",
+                "indexURL": null, // Assumindo que não há index separado por enquanto
+                "indexed": false
+            };
+        {% else %}
+            options.genome = "ecoli";
+        {% endif %}
+
+        igv.createBrowser(igvDiv, options)
+            .then(function(browser) {
+                console.log("IGV created");
+            });
+    });
+</script>
+
 <!-- Plots -->
 <!-- Plots -->
 <div class="row mb-4">
@@ -61,11 +113,7 @@
         <div class="card h-100">
             <div class="card-header bg-white">Distribuição da Pontuação de Qualidade</div>
             <div class="card-body text-center">
-                {% if analysis.plot_quality %}
-                    <img src="{{ MEDIA_URL }}{{ analysis.plot_quality }}" class="img-fluid rounded" alt="Gráfico de Qualidade">
-                {% else %}
-                    <p class="text-muted">Gráfico não disponível</p>
-                {% endif %}
+                <div id="qualityPlot"></div>
             </div>
         </div>
     </div>
@@ -76,11 +124,33 @@
         <div class="card h-100">
             <div class="card-header bg-white">Densidade de Mutação (Janela: {{ analysis.window_size }}bp)</div>
             <div class="card-body text-center">
-                {% if analysis.plot_density %}
-                    <img src="{{ MEDIA_URL }}{{ analysis.plot_density }}" class="img-fluid rounded" alt="Gráfico de Densidade">
-                {% else %}
-                    <p class="text-muted">Gráfico não disponível</p>
-                {% endif %}
+                <div id="densityPlot"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Variants Table -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white">Tabela de Variantes</div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="variantsTable" class="table table-striped table-bordered" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>Cromossomo</th>
+                                <th>Posição</th>
+                                <th>Ref</th>
+                                <th>Alt</th>
+                                <th>Qual</th>
+                                <th>Filtro</th>
+                                <th>Info</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -121,4 +191,72 @@
     </div>
 </div>
 {% endif %}
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+<script>
+    $(document).ready(function () {
+        // DataTables
+        $('#variantsTable').DataTable({
+            "processing": true,
+            "serverSide": true,
+            "ajax": "{% url 'analysis_variants_api' analysis.pk %}",
+            "columns": [
+                { "data": "chrom" },
+                { "data": "pos" },
+                { "data": "ref" },
+                { "data": "alt" },
+                { "data": "qual" },
+                { "data": "filter" },
+                { "data": "info" }
+            ],
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json"
+            }
+        });
+
+        // Plotly - Quality Distribution
+        var qualityData = {{ plot_data_quality|safe }};
+        if (qualityData && qualityData.length > 0) {
+            var trace = {
+                x: qualityData,
+                type: 'histogram',
+                marker: { color: '#198754' }
+            };
+            var layout = {
+                title: 'Distribuição de Qualidade',
+                xaxis: { title: 'Pontuação Phred' },
+                yaxis: { title: 'Contagem' },
+                autosize: true
+            };
+            Plotly.newPlot('qualityPlot', [trace], layout, {responsive: true});
+        } else {
+            document.getElementById('qualityPlot').innerHTML = '<p class="text-muted">Sem dados para gráfico</p>';
+        }
+
+        // Plotly - Density
+        var densityData = {{ plot_data_density|safe }};
+        if (densityData && Object.keys(densityData).length > 0) {
+            var traces = [];
+            for (var chrom in densityData) {
+                traces.push({
+                    x: densityData[chrom].x,
+                    y: densityData[chrom].y,
+                    mode: 'lines+markers',
+                    name: chrom
+                });
+            }
+            var layout = {
+                title: 'Densidade de Mutação',
+                xaxis: { title: 'Posição Genômica (bp)' },
+                yaxis: { title: 'Contagem' },
+                autosize: true
+            };
+            Plotly.newPlot('densityPlot', traces, layout, {responsive: true});
+        } else {
+            document.getElementById('densityPlot').innerHTML = '<p class="text-muted">Sem dados para gráfico</p>';
+        }
+    });
+</script>
 {% endblock %}

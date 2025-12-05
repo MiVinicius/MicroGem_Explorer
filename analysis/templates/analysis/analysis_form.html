@@ -33,6 +33,12 @@
                         <div class="form-text">Para anotação funcional.</div>
                     </div>
 
+                    <div class="mb-3">
+                        <label for="{{ form.reference_file.id_for_label }}" class="form-label">Genoma de Referência (Opcional)</label>
+                        {{ form.reference_file }}
+                        <div class="form-text">Arquivo .fasta. Se não fornecido, usa E. coli (K-12 MG1655).</div>
+                    </div>
+
                     <div class="mb-4">
                         <label for="{{ form.window_size.id_for_label }}" class="form-label">Tamanho da Janela (bp)</label>
                         {{ form.window_size }}

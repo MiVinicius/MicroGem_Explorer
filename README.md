@@ -4,7 +4,7 @@
 </h1>
 
 
-**Versão:** 1.0.0
+**Versão:** 1.1.0
 **Domínio:** Bioinformática / Análise de Dados
 
 O MicroGen Explorer é uma ferramenta baseada em Django projetada para automatizar a análise de dados de variantes de Sequenciamento de Nova Geração (NGS) (arquivos VCF) para genomas bacterianos. Ele fornece métricas de Controle de Qualidade (CQ), análise química genômica (razão Ti/Tv), mapeamento de densidade mutacional e anotação funcional.
@@ -20,11 +20,20 @@ O MicroGen Explorer é uma ferramenta baseada em Django projetada para automatiz
     *   Classifica mutações em Transições (Ti) e Transversões (Tv).
     *   Calcula a razão Ti/Tv para validar a qualidade dos dados biológicos.
 
-3.  **Densidade Mutacional (Hotspots)**:
+3.  **Visualização Genômica (IGV.js)**:
+    *   Visualizador de genoma integrado para explorar variantes no contexto.
+    *   Suporte a genoma de referência personalizado (upload de `.fasta`).
+    *   Padrão: *Escherichia coli* (K-12 MG1655) se nenhum arquivo for fornecido.
+
+4.  **Gráficos e Tabelas Interativos**:
+    *   Tabela de variantes paginada e pesquisável (DataTables).
+    *   Gráficos dinâmicos de qualidade e densidade (Plotly.js) com zoom e hover.
+
+5.  **Densidade Mutacional (Hotspots)**:
     *   Realiza análise de janela deslizante (padrão 1kb) para identificar hotspots mutacionais.
     *   Gera um gráfico de densidade visualizando contagens de variantes ao longo do genoma.
 
-4.  **Anotação Funcional**:
+6.  **Anotação Funcional**:
     *   Mapeia variantes para genes usando arquivos GFF3.
     *   Relata genes específicos afetados por mutações.
 
@@ -56,7 +65,9 @@ A ferramenta é acessada através de uma interface web intuitiva.
 3.  **Criar Nova Análise**:
     *   Clique em "Nova Análise" (ou "New Analysis").
     *   Faça upload do seu arquivo VCF (obrigatório).
+    *   Faça upload do seu arquivo VCF (obrigatório).
     *   (Opcional) Faça upload de um arquivo GFF para anotação funcional.
+    *   (Opcional) Faça upload de um arquivo FASTA para usar como genoma de referência no IGV.
     *   Defina o tamanho da janela para análise de densidade (padrão: 1000bp).
     *   Clique em "Analisar".
 
@@ -71,9 +82,9 @@ A ferramenta é acessada através de uma interface web intuitiva.
 Os resultados são organizados por análise e acessíveis via interface web:
 
 *   **Relatório Web**: Visualização interativa de todas as métricas.
-*   **Gráficos**:
-    *   Distribuição de Qualidade (Histograma).
-    *   Densidade de Mutação (Gráfico de Linha).
+*   **Gráficos Interativos**:
+    *   Distribuição de Qualidade (Histograma Plotly).
+    *   Densidade de Mutação (Gráfico de Linha Plotly).
 *   **Arquivos para Download**:
     *   `variant_annotations.csv`: Lista completa de variantes e genes afetados.
 

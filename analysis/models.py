@@ -4,11 +4,15 @@ import os
 class Analysis(models.Model):
     vcf_file = models.FileField(upload_to='uploads/vcf/')
     gff_file = models.FileField(upload_to='uploads/gff/', blank=True, null=True)
+    reference_file = models.FileField(upload_to='uploads/fasta/', blank=True, null=True, help_text="Arquivo FASTA de referência (opcional)")
     created_at = models.DateTimeField(auto_now_add=True)
     window_size = models.IntegerField(default=1000, help_text="Tamanho da janela para análise de densidade (bp)")
     
     # Armazenar métricas como JSON para evitar criar muitas colunas
     metrics = models.JSONField(blank=True, null=True)
+    
+    # Dados pré-calculados para gráficos (JSON)
+    plot_data = models.JSONField(blank=True, null=True)
     
     # Caminhos para imagens geradas (relativo a MEDIA_ROOT)
     plot_quality = models.CharField(max_length=255, blank=True, null=True)

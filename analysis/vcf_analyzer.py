@@ -247,3 +247,75 @@ class VCFAnalyzer:
             f.write(f"- Anotações de Variantes: {os.path.join(output_dir, 'variant_annotations.csv')}\n")
             
         print(f"Relatório resumido salvo em {report_path}")
+    def get_variants(self, start=0, length=10, search_term=None):
+        """
+        Retorna uma lista paginada de variantes, opcionalmente filtrada.
+        Retorna: (variants_list, total_count, filtered_count)
+        """
+        # Se variants não estiver carregado, tenta carregar
+        if not self.variants:
+            try:
+                self.parse()
+            except:
+                return [], 0, 0
+        
+        # Filtragem
+        filtered_variants = self.variants
+        if search_term:
+            search_term = search_term.lower()
+            filtered_variants = [
+                v for v in self.variants 
+                if search_term in str(v.CHROM).lower() or 
+                   search_term in str(v.POS) or
+                   search_term in str(v.REF).lower() or
+                   (v.ALT and any(search_term in str(a).lower() for a in v.ALT))
+            ]
+            
+        total_count = len(self.variants)
+        filtered_count = len(filtered_variants)
+        
+        # Paginação
+        end = start + length
+        page_variants = filtered_variants[start:end]
+        
+        # Formatar para JSON
+        data = []
+        for v in page_variants:
+            data.append({
+                'chrom': v.CHROM,
+                'pos': v.POS,
+                'ref': v.REF,
+                'alt': [str(a) for a in v.ALT] if v.ALT else [],
+                'qual': v.QUAL,
+                'filter': v.FILTER,
+                'info': str(v.INFO) # Simplificado para exibição
+            })
+            
+        return data, total_count, filtered_count
+
+    def get_quality_distribution_data(self):
+        """Retorna dados da distribuição de qualidade para Plotly."""
+        if self.df is None or self.df.empty:
+            return []
+            
+        # Histogram data
+        # We can just return the raw values and let Plotly handle the histogram
+        # or pre-calculate bins. Returning raw values is more flexible for Plotly.
+        return self.df['QUAL'].dropna().tolist()
+
+    def get_density_data(self, window_size=1000):
+        """Retorna dados de densidade para Plotly."""
+        df = self.calculate_density(window_size)
+        if df is None or df.empty:
+            return {}
+            
+        # Format: { 'chrom1': {'x': [pos...], 'y': [count...]}, ... }
+        plot_data = {}
+        for chrom in df['CHROM'].unique():
+            chrom_df = df[df['CHROM'] == chrom]
+            plot_data[chrom] = {
+                'x': chrom_df['WINDOW_START'].tolist(),
+                'y': chrom_df['COUNT'].tolist()
+            }
+            
+        return plot_data
