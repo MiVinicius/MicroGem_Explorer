@@ -92,6 +92,9 @@ Os resultados são organizados por análise e acessíveis via interface web:
     *   Densidade de Mutação (Gráfico de Linha Plotly).
 *   **Arquivos para Download**:
     *   `variant_annotations.csv`: Lista completa de variantes e genes afetados.
+    **Gráficos legados (a serem removidos):**
+    *   Distribuição de Qualidade (Histograma formato imagem).
+    *   Densidade de Mutação (Gráfico de Linha formato imagem).
 
 ## Estrutura do Projeto
 
