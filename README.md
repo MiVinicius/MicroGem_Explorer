@@ -55,14 +55,18 @@ O MicroGen Explorer é uma ferramenta baseada em Django projetada para automatiz
 
 A ferramenta é acessada através de uma interface web intuitiva.
 
-1.  **Inicie o Servidor**:
+1.  **Execute as Migrações**:
+    ```bash
+    python manage.py migrate
+    ```
+2.  **Inicie o Servidor**:
     ```bash
     python manage.py runserver
     ```
-2.  **Acesse o Painel**:
+3.  **Acesse o Painel**:
     Abra seu navegador e vá para `http://127.0.0.1:8000/`.
 
-3.  **Criar Nova Análise**:
+4.  **Criar Nova Análise**:
     *   Clique em "Nova Análise".
     *   Faça upload do seu arquivo VCF (obrigatório).
     *   (Opcional) Faça upload de um arquivo GFF para anotação funcional.
@@ -71,7 +75,7 @@ A ferramenta é acessada através de uma interface web intuitiva.
     *   Defina o tamanho da janela para análise de densidade (padrão: 1000bp).
     *   Clique em "Analisar".
 
-4.  **Visualizar Resultados**:
+5.  **Visualizar Resultados**:
     *   Após o processamento, você será redirecionado para a página de relatório detalhado.
     *   Visualize métricas de CQ, gráficos de qualidade e densidade, e a tabela de anotações.
     *   Baixe o CSV completo das anotações clicando em "Baixar CSV".
