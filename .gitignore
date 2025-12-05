@@ -25,5 +25,3 @@ venv.bak/
 .idea/
 *.swp
 *.swo
-
-migrations/
