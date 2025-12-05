@@ -17,6 +17,7 @@
             <a href="{% url 'analysis_list' %}" class="btn btn-outline-secondary">Lista</a>
             <a href="{% url 'analysis_create' %}" class="btn btn-primary">Nova</a>
             <a href="{% url 'analysis_delete' analysis.pk %}" class="btn btn-danger">Excluir</a>
+            <a href="{{ MEDIA_URL }}results/{{ analysis.id }}/report_summary.txt" class="btn btn-outline-primary" download>Baixar Relatório</a>
         </div>
     </div>
 </div>
@@ -92,11 +93,16 @@
             options.reference = {
                 "id": "custom_ref",
                 "fastaURL": "{{ analysis.reference_file.url }}",
-                "indexURL": null, // Assumindo que não há index separado por enquanto
-                "indexed": false
+                "indexURL": null // Se existir .fai, configure aqui
             };
         {% else %}
-            options.genome = "ecoli";
+            // Nenhum FASTA fornecido: não inicializar IGV com genome id desconhecido.
+            // Em vez disso, mostrar uma mensagem orientando o upload do FASTA.
+            var msg = document.createElement('div');
+            msg.className = 'alert alert-warning';
+            msg.textContent = 'Para visualizar no IGV, envie um arquivo FASTA de referência (ex.: E. coli K-12).';
+            igvDiv.appendChild(msg);
+            return; // Evita chamar igv.createBrowser sem referência válida
         {% endif %}
 
         igv.createBrowser(igvDiv, options)

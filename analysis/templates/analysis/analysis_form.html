@@ -30,13 +30,13 @@
                     <div class="mb-3">
                         <label for="{{ form.gff_file.id_for_label }}" class="form-label">Arquivo GFF (Opcional)</label>
                         {{ form.gff_file }}
-                        <div class="form-text">Para anotação funcional.</div>
+                        <div class="form-text">Para anotação funcional. Se não fornecido, não mostra anotações.</div>
                     </div>
 
                     <div class="mb-3">
                         <label for="{{ form.reference_file.id_for_label }}" class="form-label">Genoma de Referência (Opcional)</label>
                         {{ form.reference_file }}
-                        <div class="form-text">Arquivo .fasta. Se não fornecido, usa E. coli (K-12 MG1655).</div>
+                        <div class="form-text">Arquivo .fasta. Se não fornecido, não mostra Gráfico Visualizador Genômico (IGV).</div>
                     </div>
 
                     <div class="mb-4">

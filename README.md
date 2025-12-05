@@ -23,7 +23,7 @@ O MicroGen Explorer é uma ferramenta baseada em Django projetada para automatiz
 3.  **Visualização Genômica (IGV.js)**:
     *   Visualizador de genoma integrado para explorar variantes no contexto.
     *   Suporte a genoma de referência personalizado (upload de `.fasta`).
-    *   Padrão: *Escherichia coli* (K-12 MG1655) se nenhum arquivo for fornecido.
+    *   Sem FASTA: o IGV não é inicializado e é exibido um aviso solicitando o upload de um arquivo de referência.
 
 4.  **Gráficos e Tabelas Interativos**:
     *   Tabela de variantes paginada e pesquisável (DataTables).
@@ -63,11 +63,11 @@ A ferramenta é acessada através de uma interface web intuitiva.
     Abra seu navegador e vá para `http://127.0.0.1:8000/`.
 
 3.  **Criar Nova Análise**:
-    *   Clique em "Nova Análise" (ou "New Analysis").
-    *   Faça upload do seu arquivo VCF (obrigatório).
+    *   Clique em "Nova Análise".
     *   Faça upload do seu arquivo VCF (obrigatório).
     *   (Opcional) Faça upload de um arquivo GFF para anotação funcional.
-    *   (Opcional) Faça upload de um arquivo FASTA para usar como genoma de referência no IGV.
+    *   (Opcional, recomendado) Faça upload de um arquivo FASTA para usar como genoma de referência no IGV.
+    *   Observação: para genomas bacterianos (ex.: *E. coli*), o IGV requer o arquivo FASTA de referência; IDs como "ecoli" não são suportados.
     *   Defina o tamanho da janela para análise de densidade (padrão: 1000bp).
     *   Clique em "Analisar".
 
@@ -75,6 +75,7 @@ A ferramenta é acessada através de uma interface web intuitiva.
     *   Após o processamento, você será redirecionado para a página de relatório detalhado.
     *   Visualize métricas de CQ, gráficos de qualidade e densidade, e a tabela de anotações.
     *   Baixe o CSV completo das anotações clicando em "Baixar CSV".
+    *   Baixe o relatório resumido clicando em "Baixar Relatório".
     *   Navegue de volta para a lista de análises para ver o histórico.
 
 ## Saídas
