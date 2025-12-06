@@ -1,0 +1,12 @@
+Instalar o conda
+
+wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh
+
+
+
+Criar o ambiente conda
+
+conda create -n fasta2vcf minimap2 samtools bcftools python -y
+conda activate fasta2vcf
+
+Colocar ref.fasta, sample.fasta e o script.py na mesma pasta e rodar o .py!
