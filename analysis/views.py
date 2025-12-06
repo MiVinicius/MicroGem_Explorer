@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import Analysis
 from .forms import AnalysisForm
 from .vcf_analyzer import VCFAnalyzer
+from .services import start_analysis_background
 import os
 from django.conf import settings
 
@@ -18,70 +19,14 @@ def analysis_create(request):
         if form.is_valid():
             analysis = form.save()
             
-            # Executar Análise
-            vcf_path = analysis.vcf_file.path
-            
-            # Criar um diretório de saída específico para esta análise
-            output_rel_dir = f'results/{analysis.id}'
-            output_dir = os.path.join(settings.MEDIA_ROOT, output_rel_dir)
-            
-            if not os.path.exists(output_dir):
-                os.makedirs(output_dir)
-            
             try:
-                analyzer = VCFAnalyzer(vcf_path)
-                analyzer.parse()
-                
-                # Calcular Métricas
-                metrics = analyzer.get_summary()
-                analysis.metrics = metrics
-                
-                # Gerar Gráficos (Estáticos - mantidos por compatibilidade ou backup)
-                analyzer.generate_qc_plots(output_dir)
-                
-                density_df = analyzer.calculate_density(window_size=analysis.window_size)
-                analyzer.generate_density_plot(density_df, output_dir)
-                
-                # Pré-calcular dados para gráficos interativos (Plotly) e salvar no banco
-                plot_data_quality = analyzer.get_quality_distribution_data()
-                plot_data_density = analyzer.get_density_data(window_size=analysis.window_size)
-                
-                analysis.plot_data = {
-                    'quality': plot_data_quality,
-                    'density': plot_data_density
-                }
-                
-                # Relatório Resumido
-                analyzer.generate_report(output_dir)
-                
-                # Atualizar modelo com caminhos dos gráficos (relativo a MEDIA_ROOT)
-                analysis.plot_quality = f'{output_rel_dir}/qc_quality_distribution.png'
-                analysis.plot_density = f'{output_rel_dir}/qc_mutation_density.png'
-                
-                # Anotação (se GFF fornecido)
-                # Anotação (se GFF fornecido)
-                if analysis.gff_file:
-                    gff_path = analysis.gff_file.path
-                    annotations = analyzer.annotate_variants(gff_path)
-                    
-                    # Salvar para CSV
-                    import pandas as pd
-                    ann_df = pd.DataFrame(annotations)
-                    ann_path = os.path.join(output_dir, 'variant_annotations.csv')
-                    ann_df.to_csv(ann_path, index=False)
-                    
-                    analysis.annotation_file = f'{output_rel_dir}/variant_annotations.csv'
-
-                    # Podemos armazenar anotações em métricas ou em um arquivo/modelo separado
-                    # Para simplificar, vamos adicionar os top 50 às métricas para exibição
-                    metrics['annotations'] = annotations[:50] 
-                
-                analysis.save()
+                # Iniciar análise em background
+                start_analysis_background(analysis.id)
                 return redirect('analysis_detail', pk=analysis.pk)
                 
             except Exception as e:
                 # Lidar com erro (excluir modelo ou mostrar mensagem)
-                print(f"Erro ao processar análise: {e}")
+                print(f"Erro ao iniciar análise: {e}")
                 analysis.delete()
                 form.add_error(None, f"Erro ao processar arquivo: {e}")
     else:
@@ -109,25 +54,9 @@ def analysis_detail(request, pk):
         plot_data_quality = analysis.plot_data.get('quality', [])
         plot_data_density = analysis.plot_data.get('density', {})
     else:
-        # Fallback para análises antigas: calcular e salvar
-        vcf_path = analysis.vcf_file.path
-        try:
-            analyzer = VCFAnalyzer(vcf_path)
-            analyzer.parse()
-            analyzer.calculate_qc_metrics()
-            
-            plot_data_quality = analyzer.get_quality_distribution_data()
-            plot_data_density = analyzer.get_density_data(window_size=analysis.window_size)
-            
-            # Salvar no banco para a próxima vez
-            analysis.plot_data = {
-                'quality': plot_data_quality,
-                'density': plot_data_density
-            }
-            analysis.save()
-            
-        except Exception as e:
-            print(f"Erro ao carregar dados de gráfico: {e}")
+        # Se não houver dados, não tentamos calcular síncrono para evitar travar.
+        # O background service irá preencher isso.
+        pass
 
     context = {
         'analysis': analysis,
@@ -145,6 +74,7 @@ def analysis_delete(request, pk):
     return render(request, 'analysis/analysis_confirm_delete.html', {'analysis': analysis})
     return render(request, 'analysis/analysis_confirm_delete.html', {'analysis': analysis})
 
+import pandas as pd
 from django.http import JsonResponse
 
 def analysis_variants_api(request, pk):
@@ -157,14 +87,39 @@ def analysis_variants_api(request, pk):
     draw = int(request.GET.get('draw', 1))
     search_value = request.GET.get('search[value]', None)
     
-    vcf_path = analysis.vcf_file.path
-    analyzer = VCFAnalyzer(vcf_path)
+    # Caminho do CSV gerado pelo services.py
+    output_rel_dir = f'results/{analysis.id}'
+    csv_path = os.path.join(settings.MEDIA_ROOT, output_rel_dir, 'variants.csv')
     
-    # Nota: Em produção, o ideal seria não fazer parse() a cada request.
-    # Mas como VCFAnalyzer carrega em memória, é o que temos para agora.
-    # Uma otimização futura seria cachear ou usar banco de dados.
+    data = []
+    total = 0
+    filtered = 0
     
-    data, total, filtered = analyzer.get_variants(start, length, search_value)
+    if os.path.exists(csv_path):
+        try:
+            # Ler CSV otimizado
+            # Para arquivos muito grandes, usar chunks. Aqui vamos ler tudo pois é mais rápido que parsear VCF
+            # Se for > 100MB, devemos usar chunks ou banco de dados.
+            df = pd.read_csv(csv_path)
+            
+            total = len(df)
+            
+            # Busca
+            if search_value:
+                df = df[
+                    df.astype(str).apply(lambda x: x.str.contains(search_value, case=False, na=False)).any(axis=1)
+                ]
+            
+            filtered = len(df)
+            
+            # Paginação
+            df_page = df.iloc[start:start+length]
+            
+            # Converter para dict
+            data = df_page.to_dict('records')
+            
+        except Exception as e:
+            print(f"Erro ao ler CSV de variantes: {e}")
     
     response = {
         'draw': draw,

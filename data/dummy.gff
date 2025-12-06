@@ -1,5 +1,0 @@
-##gff-version 3
-chr1	MicroGenDummy	gene	50	150	.	+	.	ID=gene1;Name=GeneA
-chr1	MicroGenDummy	gene	200	300	.	-	.	ID=gene2;Name=GeneB
-chr1	MicroGenDummy	CDS	400	500	.	+	0	ID=cds1;Name=GeneC_CDS
-chr1	MicroGenDummy	gene	650	750	.	+	.	ID=gene3;Name=GeneD

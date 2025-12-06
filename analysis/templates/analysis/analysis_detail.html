@@ -10,17 +10,50 @@
     <div class="col-12 d-flex justify-content-between align-items-center">
         <div>
             <h2>Relatório de Análise #{{ analysis.id }}</h2>
-            <span class="text-muted">{{ analysis.created_at|date:"d M, Y H:i" }}</span>
+            
+            {% if analysis.status == 'PROCESSING' %}
+                <span class="badge bg-warning text-dark">Processando...</span>
+            {% elif analysis.status == 'COMPLETED' %}
+                <span class="badge bg-success">Concluído</span>
+            {% elif analysis.status == 'FAILED' %}
+                <span class="badge bg-danger">Falhou</span>
+            {% else %}
+                <span class="badge bg-secondary">{{ analysis.status }}</span>
+            {% endif %}
+
+            <span class="text-muted ms-2">{{ analysis.created_at|date:"d M, Y H:i" }}</span>
         </div>
         <div class="btn-group">
             <a href="{% url 'home' %}" class="btn btn-outline-secondary">Home</a>
             <a href="{% url 'analysis_list' %}" class="btn btn-outline-secondary">Lista</a>
             <a href="{% url 'analysis_create' %}" class="btn btn-primary">Nova</a>
             <a href="{% url 'analysis_delete' analysis.pk %}" class="btn btn-danger">Excluir</a>
+            {% if analysis.status == 'COMPLETED' %}
             <a href="{{ MEDIA_URL }}results/{{ analysis.id }}/report_summary.txt" class="btn btn-outline-primary" download>Baixar Relatório</a>
+            {% endif %}
         </div>
     </div>
 </div>
+
+{% if analysis.status == 'PROCESSING' or analysis.status == 'PENDING' %}
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Carregando...</span>
+        </div>
+        <h4 class="mt-3">Analisando Genoma...</h4>
+        <p class="text-muted">Isso pode levar alguns instantes dependendo do tamanho do arquivo. Esta página será atualizada automaticamente.</p>
+    </div>
+    <script>
+        setTimeout(function(){
+           window.location.reload(1);
+        }, 5000);
+    </script>
+{% elif analysis.status == 'FAILED' %}
+    <div class="alert alert-danger">
+        <h4>Falha na Análise</h4>
+        <p>{{ analysis.error_message }}</p>
+    </div>
+{% else %}
 
 <!-- QC Metrics Cards -->
 <div class="row mb-4">
@@ -102,17 +135,18 @@
             msg.className = 'alert alert-warning';
             msg.textContent = 'Para visualizar no IGV, envie um arquivo FASTA de referência (ex.: E. coli K-12).';
             igvDiv.appendChild(msg);
-            return; // Evita chamar igv.createBrowser sem referência válida
+            // return; // NO RETURN here, otherwise plots won't init
         {% endif %}
 
-        igv.createBrowser(igvDiv, options)
-            .then(function(browser) {
-                console.log("IGV created");
-            });
+        if (options.reference || options.genome) {
+             igv.createBrowser(igvDiv, options)
+                .then(function(browser) {
+                    console.log("IGV created");
+                });
+        }
     });
 </script>
 
-<!-- Plots -->
 <!-- Plots -->
 <div class="row mb-4">
     <div class="col-12">
@@ -209,13 +243,13 @@
             "serverSide": true,
             "ajax": "{% url 'analysis_variants_api' analysis.pk %}",
             "columns": [
-                { "data": "chrom" },
-                { "data": "pos" },
-                { "data": "ref" },
-                { "data": "alt" },
-                { "data": "qual" },
-                { "data": "filter" },
-                { "data": "info" }
+                { "data": "chrom", "defaultContent": "" },
+                { "data": "pos", "defaultContent": "" },
+                { "data": "ref", "defaultContent": "" },
+                { "data": "alt", "render": function(data) { return Array.isArray(data) ? data.join(", ") : data; }, "defaultContent": "" },
+                { "data": "qual", "defaultContent": "" },
+                { "data": "filter", "defaultContent": "" },
+                { "data": "info", "defaultContent": "" }
             ],
             "language": {
                 "url": "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json"
@@ -265,4 +299,5 @@
         }
     });
 </script>
+{% endif %}
 {% endblock %}

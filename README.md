@@ -4,7 +4,7 @@
 </h1>
 
 
-**Versão:** 1.1.0
+**Versão:** 1.2.0
 **Domínio:** Bioinformática / Análise de Dados
 
 O MicroGen Explorer é uma ferramenta baseada em Django projetada para automatizar a análise de dados de variantes de Sequenciamento de Nova Geração (NGS) (arquivos VCF) para genomas bacterianos. Ele fornece métricas de Controle de Qualidade (CQ), análise química genômica (razão Ti/Tv), mapeamento de densidade mutacional e anotação funcional.
@@ -92,14 +92,13 @@ Os resultados são organizados por análise e acessíveis via interface web:
     *   Densidade de Mutação (Gráfico de Linha Plotly).
 *   **Arquivos para Download**:
     *   `variant_annotations.csv`: Lista completa de variantes e genes afetados.
-*   **Gráficos legados (a serem removidos):**
+*   **Gráficos legados (a serem removidos em breve):**
     *   Distribuição de Qualidade (Histograma formato imagem).
     *   Densidade de Mutação (Gráfico de Linha formato imagem).
 
 ## Estrutura do Projeto
 
 *   `analysis/`: App Django principal contendo a lógica (`vcf_analyzer.py`, `gff_parser.py`).
-*   `data/`: Contém dados de exemplo para teste (`dummy.vcf`, `dummy.gff`).
 *   `media/`: Armazena arquivos enviados pelo usuário (`uploads/`) e resultados gerados (`results/`).
 *   `manage.py`: Ponto de entrada do Django.
 *   `microgen_explorer/`: Contém arquivos de configuração do Django.

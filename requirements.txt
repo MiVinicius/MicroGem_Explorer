@@ -4,3 +4,4 @@ PyVCF3
 matplotlib
 seaborn
 numpy
+pyfaidx

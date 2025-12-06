@@ -25,3 +25,6 @@ venv.bak/
 .idea/
 *.swp
 *.swo
+
+# Tests
+tests/
