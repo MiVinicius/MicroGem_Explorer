@@ -37,8 +37,6 @@ O MicroGen Explorer é uma ferramenta baseada em Django projetada para automatiz
     *   Mapeia variantes para genes usando arquivos GFF3.
     *   Relata genes específicos afetados por mutações.
 
-6.  **Conversão de FASTA para VCF**:
-    *   Pipeline para converter arquivos.fasta para .vcf
 
 ## Instalação
 
@@ -85,8 +83,6 @@ A ferramenta é acessada através de uma interface web intuitiva.
     *   Baixe o relatório resumido clicando em "Baixar Relatório".
     *   Navegue de volta para a lista de análises para ver o histórico.
 
-5.  **Converter FASTA para VCF**:
-    *   Siga os passos do pipeline_fasta_vcf.txt e use o pipeline_fasta_vcf.py para converter arquivos FASTA para VCF.
 
 ## Saídas
 
@@ -110,3 +106,5 @@ Os resultados são organizados por análise e acessíveis via interface web:
 *   `microgen_explorer/`: Contém arquivos de configuração do Django.
 *   `requirements.txt`: Lista de dependências do projeto.
 
+## Opcional (Converter FASTA para VCF):
+  * Pipeline e script python para converter arquivos FASTA para VCF
