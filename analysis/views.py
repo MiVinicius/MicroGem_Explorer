@@ -1,10 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Analysis
 from .forms import AnalysisForm
-from .vcf_analyzer import VCFAnalyzer
 from .services import start_analysis_background
-import os
 from django.conf import settings
+import os
+import pandas as pd
+import json
+from django.http import JsonResponse
 
 def home(request):
     return render(request, 'analysis/home.html')
@@ -18,15 +20,11 @@ def analysis_create(request):
         form = AnalysisForm(request.POST, request.FILES)
         if form.is_valid():
             analysis = form.save()
-            
             try:
-                # Iniciar análise em background
+                # Inicia análise em background
                 start_analysis_background(analysis.id)
                 return redirect('analysis_detail', pk=analysis.pk)
-                
             except Exception as e:
-                # Lidar com erro (excluir modelo ou mostrar mensagem)
-                print(f"Erro ao iniciar análise: {e}")
                 analysis.delete()
                 form.add_error(None, f"Erro ao processar arquivo: {e}")
     else:
@@ -35,35 +33,24 @@ def analysis_create(request):
 
 def analysis_detail(request, pk):
     analysis = get_object_or_404(Analysis, pk=pk)
-    
-    # Arredondar métricas para exibição para evitar problemas com filtros de template
-    if analysis.metrics:
-        if 'mean_quality' in analysis.metrics:
-            analysis.metrics['mean_quality'] = round(analysis.metrics['mean_quality'], 2)
-        if 'ti_tv_ratio' in analysis.metrics:
-            analysis.metrics['ti_tv_ratio'] = round(analysis.metrics['ti_tv_ratio'], 2)
-            
-    # Obter dados para gráficos interativos
-    import json
-    
-    plot_data_quality = []
-    plot_data_density = {}
-    
-    # Tentar usar dados em cache
-    if analysis.plot_data:
-        plot_data_quality = analysis.plot_data.get('quality', [])
-        plot_data_density = analysis.plot_data.get('density', {})
-    else:
-        # Se não houver dados, não tentamos calcular síncrono para evitar travar.
-        # O background service irá preencher isso.
-        pass
+
+    # Preparar métricas
+    metrics = analysis.metrics or {}
+    for key in ['mean_quality', 'ti_tv_ratio']:
+        if key in metrics and metrics[key] is not None:
+            metrics[key] = round(metrics[key], 2)
+
+    # Dados para gráficos interativos
+    plot_data_quality = analysis.plot_data.get('quality', []) if analysis.plot_data else []
+    plot_data_density = analysis.plot_data.get('density', {}) if analysis.plot_data else {}
 
     context = {
         'analysis': analysis,
+        'analysis_metrics': metrics,
         'plot_data_quality': json.dumps(plot_data_quality),
-        'plot_data_density': json.dumps(plot_data_density)
+        'plot_data_density': json.dumps(plot_data_density),
+        'MEDIA_URL': settings.MEDIA_URL
     }
-            
     return render(request, 'analysis/analysis_detail.html', context)
 
 def analysis_delete(request, pk):
@@ -72,60 +59,40 @@ def analysis_delete(request, pk):
         analysis.delete()
         return redirect('analysis_list')
     return render(request, 'analysis/analysis_confirm_delete.html', {'analysis': analysis})
-    return render(request, 'analysis/analysis_confirm_delete.html', {'analysis': analysis})
-
-import pandas as pd
-from django.http import JsonResponse
 
 def analysis_variants_api(request, pk):
-    """API para retornar variantes paginadas para DataTables."""
+    """API para DataTables retornar variantes paginadas."""
     analysis = get_object_or_404(Analysis, pk=pk)
-    
-    # Parâmetros do DataTables
+
     start = int(request.GET.get('start', 0))
     length = int(request.GET.get('length', 10))
     draw = int(request.GET.get('draw', 1))
-    search_value = request.GET.get('search[value]', None)
-    
-    # Caminho do CSV gerado pelo services.py
-    output_rel_dir = f'results/{analysis.id}'
-    csv_path = os.path.join(settings.MEDIA_ROOT, output_rel_dir, 'variants.csv')
-    
+    search_value = request.GET.get('search[value]', '')
+
+    csv_path = os.path.join(settings.MEDIA_ROOT, f'results/{analysis.id}/variants.csv')
+
     data = []
-    total = 0
-    filtered = 0
-    
+    records_total = 0
+    records_filtered = 0
+
     if os.path.exists(csv_path):
         try:
-            # Ler CSV otimizado
-            # Para arquivos muito grandes, usar chunks. Aqui vamos ler tudo pois é mais rápido que parsear VCF
-            # Se for > 100MB, devemos usar chunks ou banco de dados.
-            df = pd.read_csv(csv_path)
-            
-            total = len(df)
-            
-            # Busca
+            df = pd.read_csv(csv_path, encoding='utf-8')
+            records_total = len(df)
+
             if search_value:
-                df = df[
-                    df.astype(str).apply(lambda x: x.str.contains(search_value, case=False, na=False)).any(axis=1)
-                ]
-            
-            filtered = len(df)
-            
-            # Paginação
+                df = df[df.astype(str).apply(lambda x: x.str.contains(search_value, case=False, na=False)).any(axis=1)]
+
+            records_filtered = len(df)
             df_page = df.iloc[start:start+length]
-            
-            # Converter para dict
-            data = df_page.to_dict('records')
-            
+            data = df_page.astype(str).to_dict('records')
+
         except Exception as e:
             print(f"Erro ao ler CSV de variantes: {e}")
-    
-    response = {
+
+    return JsonResponse({
         'draw': draw,
-        'recordsTotal': total,
-        'recordsFiltered': filtered,
+        'recordsTotal': records_total,
+        'recordsFiltered': records_filtered,
         'data': data
-    }
-    
-    return JsonResponse(response)
+    })

@@ -8,4 +8,5 @@ urlpatterns = [
     path('<int:pk>/', views.analysis_detail, name='analysis_detail'),
     path('<int:pk>/delete/', views.analysis_delete, name='analysis_delete'),
     path('<int:pk>/variants_api/', views.analysis_variants_api, name='analysis_variants_api'),
+    # Futuras rotas para gráficos ou relatórios extras podem ser adicionadas aqui
 ]
