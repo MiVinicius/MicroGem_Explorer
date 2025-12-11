@@ -257,7 +257,31 @@ class VCFAnalyzer:
             plt.savefig(density_path)
             plt.close()
 
-        return {"qual_plot": qual_path, "density_plot": density_path}
+        mutation_density_path = self.generate_mutation_density_plot(output_dir)
+
+        return {
+            "qual_plot": qual_path,
+            "density_plot": density_path,
+            "mutation_density_plot": mutation_density_path
+        }
+    
+    def generate_mutation_density_plot(self, output_dir):
+        os.makedirs(output_dir, exist_ok=True)
+
+        density_path = os.path.join(output_dir, "mutation_density.png")
+
+        if self.df_variants is not None and "POS" in self.df_variants.columns:
+            plt.figure(figsize=(10, 4))
+            plt.hist(self.df_variants["POS"], bins=200, alpha=0.7)
+            plt.xlabel("Posição Genômica (bp)")
+            plt.ylabel("Contagem")
+            plt.title("Densidade de Mutação ao Longo do Genoma")
+            plt.tight_layout()
+            plt.savefig(density_path)
+            plt.close()
+
+        return density_path
+
 
     # ---------------------------
     # MÉTRICAS

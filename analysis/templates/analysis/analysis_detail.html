@@ -2,7 +2,6 @@
 
 {% block extra_head %}
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
-<script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -27,7 +26,8 @@
             <a href="{% url 'analysis_create' %}" class="btn btn-primary">Nova</a>
             <a href="{% url 'analysis_delete' analysis.pk %}" class="btn btn-danger">Excluir</a>
             {% if analysis.status == 'COMPLETED' %}
-                <a href="{{ MEDIA_URL }}results/{{ analysis.id }}/report_summary.txt" class="btn btn-outline-primary" download>Baixar Relatório</a>
+                <a href="{{ MEDIA_URL }}results/{{ analysis.id }}/report_summary.txt"
+                   class="btn btn-outline-primary" download>Baixar Relatório</a>
             {% endif %}
         </div>
     </div>
@@ -44,14 +44,64 @@
 <script>
     setTimeout(function(){ window.location.reload(1); }, 5000);
 </script>
+
 {% elif analysis.status == 'FAILED' %}
 <div class="alert alert-danger">
     <h4>Falha na Análise</h4>
     <p>{{ analysis.error_message }}</p>
 </div>
-{% else %}
 
-<!-- IGV.js Container -->
+{% else %}
+<!-- ---------------------------------------------------------------------- -->
+<!--  GRÁFICOS ESTÁTICOS (MATPLOTLIB) - corrigidos com cache-busting        -->
+<!-- ---------------------------------------------------------------------- -->
+{% if analysis.status == "COMPLETED" %}
+
+<!-- QUAL -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white">Gráfico de Qualidade (QUAL)</div>
+            <div class="card-body text-center">
+                <img src="/media/results/{{ analysis.id }}/plots/qc_quality_distribution.png?v={{ analysis.updated_at.timestamp }}"
+                     class="img-fluid" />
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- DENSIDADE -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white">Densidade de Variantes</div>
+            <div class="card-body text-center">
+                <img src="/media/results/{{ analysis.id }}/plots/density_per_chrom.png?v={{ analysis.updated_at.timestamp }}"
+                     class="img-fluid" />
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- DENSIDADE DE MUTAÇÃO -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white">Densidade de Mutação</div>
+            <div class="card-body text-center">
+                <img src="/media/results/{{ analysis.id }}/plots/mutation_density.png?v={{ analysis.updated_at.timestamp }}"
+                     class="img-fluid" />
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- ---------------------------------------------------------------------- -->
+<!-- IGV.JS -->
+<!-- ---------------------------------------------------------------------- -->
 <div class="row mb-4">
     <div class="col-12">
         <div class="card">
@@ -65,47 +115,47 @@
 
 <script src="https://cdn.jsdelivr.net/npm/igv@2.15.5/dist/igv.min.js"></script>
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        var igvDiv = document.getElementById("igv-div");
-        var options = {
-            locus: "all",
-            tracks: [
-                {
-                    name: "Variantes",
-                    url: "{{ analysis.vcf_file.url }}",
-                    format: "vcf",
-                    type: "variant",
-                    indexed: false 
-                }
-            ]
+document.addEventListener("DOMContentLoaded", function() {
+    var igvDiv = document.getElementById("igv-div");
+
+    var options = {
+        locus: "all",
+        tracks: [
+            {
+                name: "Variantes",
+                url: "{{ analysis.vcf_file.url }}",
+                format: "vcf",
+                type: "variant",
+                indexed: false
+            }
+        ]
+    };
+
+    {% if analysis.reference_file %}
+        options.reference = {
+            "id": "custom_ref",
+            "fastaURL": "{{ analysis.reference_file.url }}",
+            "indexURL": null
         };
+    {% else %}
+        var msg = document.createElement('div');
+        msg.className = 'alert alert-warning';
+        msg.textContent = 'Para visualizar no IGV, envie um arquivo FASTA de referência.';
+        igvDiv.appendChild(msg);
+    {% endif %}
 
-        {% if analysis.reference_file %}
-            options.reference = {
-                "id": "custom_ref",
-                "fastaURL": "{{ analysis.reference_file.url }}",
-                "indexURL": null // Se existir .fai, configure aqui
-            };
-        {% else %}
-            // Nenhum FASTA fornecido: não inicializar IGV com genome id desconhecido.
-            // Em vez disso, mostrar uma mensagem orientando o upload do FASTA.
-            var msg = document.createElement('div');
-            msg.className = 'alert alert-warning';
-            msg.textContent = 'Para visualizar no IGV, envie um arquivo FASTA de referência (ex.: E. coli K-12).';
-            igvDiv.appendChild(msg);
-            // return; // NO RETURN here, otherwise plots won't init
-        {% endif %}
-
-        if (options.reference || options.genome) {
-             igv.createBrowser(igvDiv, options)
-                .then(function(browser) {
-                    console.log("IGV created");
-                });
-        }
-    });
+    if (options.reference || options.genome) {
+        igv.createBrowser(igvDiv, options).then(function(browser) {
+            console.log("IGV criado");
+        });
+    }
+});
 </script>
 
-<!-- QC Metrics -->
+
+<!-- ---------------------------------------------------------------------- -->
+<!-- MÉTRICAS QC -->
+<!-- ---------------------------------------------------------------------- -->
 <div class="row mb-4">
     <div class="col-md-3">
         <div class="card text-center h-100">
@@ -143,32 +193,26 @@
     </div>
 </div>
 
-<!-- Density Plot -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card h-100">
-            <div class="card-header bg-white">Densidade de Mutação (Janela: {{ analysis.window_size }}bp)</div>
-            <div class="card-body text-center"><div id="densityPlot"></div></div>
-        </div>
-    </div>
-</div>
 
-<!-- Variants Table -->
+<!-- ---------------------------------------------------------------------- -->
+<!-- TABELA DE VARIANTES -->
+<!-- ---------------------------------------------------------------------- -->
 <div class="row mb-4">
     <div class="col-12">
         <div class="card">
-            <div class="card-header bg-white">Tabela de Variantes (Top 50)</div>
+            <div class="card-header bg-white">Tabela de Variantes</div>
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-striped table-bordered" id="variantsTable">
                         <thead>
                             <tr>
+                                <th>Chr</th>
                                 <th>Posição</th>
                                 <th>Ref</th>
                                 <th>Alt</th>
-                                <th>Gene(s)</th>
                             </tr>
                         </thead>
+                        <tbody></tbody>
                     </table>
                 </div>
             </div>
@@ -176,90 +220,69 @@
     </div>
 </div>
 
+
+<!-- ---------------------------------------------------------------------- -->
+<!-- TABELA DE ANOTAÇÕES -->
+<!-- ---------------------------------------------------------------------- -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white">Tabela de Anotações</div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered" id="annotationsTable">
+                        <thead>
+                            <tr>
+                                <th>Chr</th>
+                                <th>Posição</th>
+                                <th>Ref</th>
+                                <th>Alt</th>
+                                <th>Genes</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <!-- JS -->
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
 
-    // --- Plotly Density Plot ---
-    var densityData = {{ plot_data_density|safe }};
-    if (densityData && Object.keys(densityData).length > 0) {
-        var traces = [];
-        let maxX = 0;
-        let maxY = 0;
+    const variantsData = JSON.parse('{{ variants_json|escapejs }}');
+    const annotationsData = JSON.parse('{{ annotations_json|escapejs }}');
 
-        Object.keys(densityData).forEach(function(chrom) {
-            const xs = densityData[chrom].x || [];
-            const ys = densityData[chrom].y || [];
-            const filteredXs = [];
-            const filteredYs = [];
-
-            for (let i = 0; i < ys.length; i++) {
-                if (ys[i] > 0 && xs[i] != null) {
-                    filteredXs.push(xs[i]);
-                    filteredYs.push(ys[i]);
-                    if (ys[i] > maxY) maxY = ys[i];
-                }
-            }
-
-            if (filteredXs.length > 0) {
-                traces.push({
-                    x: filteredXs,
-                    y: filteredYs,
-                    mode: 'markers',
-                    marker: {
-                        size: 6,
-                        color: filteredYs,
-                        colorscale: 'Viridis',
-                        cmin: 0,
-                        cmax: maxY,
-                        colorbar: { title: 'Densidade', thickness: 15, len: 0.6, yanchor: 'top', y: 0.95 }
-                    },
-                    showlegend: false,
-                    hovertemplate: 'Posição: %{x}<br>Densidade: %{y}<extra></extra>'
-                });
-
-                traces.push({
-                    x: filteredXs,
-                    y: filteredYs,
-                    mode: 'lines',
-                    line: { shape: 'spline', smoothing: 1.3, color: 'rgba(31,119,180,0.7)' },
-                    showlegend: false,
-                    hoverinfo: 'skip'
-                });
-
-                maxX = Math.max(maxX, Math.max(...filteredXs));
-            }
-        });
-
-        Plotly.newPlot('densityPlot', traces, {
-            title: 'Densidade de Mutação',
-            xaxis: { title: 'Posição Genômica (bp)', range: [0, maxX], automargin: true },
-            yaxis: { title: 'Contagem', automargin: true },
-            hovermode: 'closest',
-            showlegend: false,
-            margin: { t: 40, b: 50, l: 50, r: 100 }
-        }, { displayModeBar: false });
-    }
-
-    // --- DataTable Variantes ---
+    // Tabela de Variantes
     $('#variantsTable').DataTable({
-        data: {{ analysis.metrics.annotations|safe }},
+        data: variantsData,
         columns: [
-            { data: 'POS' },
-            { data: 'REF' },
-            { data: 'ALT' },
-            { data: 'GENES' }
+            { data: 'CHROM', title: 'Chr' },
+            { data: 'POS', title: 'Posição' },
+            { data: 'REF', title: 'Ref' },
+            { data: 'ALT', title: 'Alt' }
         ],
-        paging: true,
-        pageLength: 50,
-        lengthChange: false,
-        searching: true,
-        info: false,
-        ordering: true
+        scrollX: true
+    });
+
+    // Tabela de Anotações
+    $('#annotationsTable').DataTable({
+        data: annotationsData,
+        columns: [
+            { data: 'CHROM', title: 'Chr' },
+            { data: 'POS', title: 'Posição' },
+            { data: 'REF', title: 'Ref' },
+            { data: 'ALT', title: 'Alt' },
+            { data: 'GENES', title: 'Genes' }
+        ],
+        scrollX: true
     });
 
 });

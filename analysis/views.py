@@ -34,24 +34,46 @@ def analysis_create(request):
 def analysis_detail(request, pk):
     analysis = get_object_or_404(Analysis, pk=pk)
 
-    # Preparar métricas
+    # Métricas
     metrics = analysis.metrics or {}
+
+    # --- ARREDONDAR MÉTRICAS ---
     for key in ['mean_quality', 'ti_tv_ratio']:
         if key in metrics and metrics[key] is not None:
-            metrics[key] = round(metrics[key], 2)
+            try:
+                metrics[key] = round(float(metrics[key]), 2)
+            except:
+                pass
+    analysis.metrics = metrics
 
-    # Dados para gráficos interativos
-    plot_data_quality = analysis.plot_data.get('quality', []) if analysis.plot_data else []
-    plot_data_density = analysis.plot_data.get('density', {}) if analysis.plot_data else {}
+
+
+    # ---- Separar dados ----
+
+    # Variantes (vem do CSV)
+    variants = []
+    variants_csv = os.path.join(settings.MEDIA_ROOT, f"results/{analysis.id}/variants.csv")
+
+    if os.path.exists(variants_csv):
+        try:
+            df = pd.read_csv(variants_csv)
+            variants = df.fillna("").astype(str).to_dict("records")
+        except Exception as e:
+            print("Erro ao carregar variants.csv:", e)
+
+    # Anotações (vem das métricas JSON)
+    annotations = metrics.get("annotations", [])
 
     context = {
         'analysis': analysis,
         'analysis_metrics': metrics,
-        'plot_data_quality': json.dumps(plot_data_quality),
-        'plot_data_density': json.dumps(plot_data_density),
-        'MEDIA_URL': settings.MEDIA_URL
+        'variants_json': json.dumps(variants),
+        'annotations_json': json.dumps(annotations),
+        'MEDIA_URL': settings.MEDIA_URL,
     }
+
     return render(request, 'analysis/analysis_detail.html', context)
+
 
 def analysis_delete(request, pk):
     analysis = get_object_or_404(Analysis, pk=pk)

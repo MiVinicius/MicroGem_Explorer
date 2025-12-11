@@ -10,6 +10,7 @@ from .models import Analysis
 from .vcf_analyzer import VCFAnalyzer
 from BCBio import GFF
 import pyfaidx
+import time
 
 executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
 
@@ -62,7 +63,7 @@ def run_analysis(analysis_id):
         # -----------------------------
         # Gerar gráficos QC
         # -----------------------------
-        analyzer.generate_qc_plots(plots_dir)
+        plot_paths = analyzer.generate_qc_plots(plots_dir)
 
         # -----------------------------
         # Obter dados de qualidade e densidade
@@ -76,6 +77,20 @@ def run_analysis(analysis_id):
             }
             for chrom, data in analyzer.get_density_data(window_size=getattr(analysis, 'window_size', 1000)).items()
         } or {}
+
+        # -----------------------------
+        # Montar URLs públicas dos gráficos
+        # -----------------------------
+        plots_url_base = f"{settings.MEDIA_URL.rstrip('/')}/results/{analysis.id}/plots"
+
+        analysis.plot_data = {
+            "quality": quality_data,
+            "density": density_data,
+            "plots": {
+                "qual_plot": f"{plots_url_base}/qc_quality_distribution.png",
+                "density_plot": f"{plots_url_base}/density_per_chrom.png"
+            }
+        }
 
         # -----------------------------
         # Anotar genes via GFF
@@ -135,10 +150,16 @@ def run_analysis(analysis_id):
         analysis.metrics = metrics
         analysis.plot_data = {
             "quality": quality_data,
-            "density": density_data
+            "density": density_data,
+            "plots": {
+                "qual_plot": f"{plots_url_base}/qc_quality_distribution.png?v={int(time.time())}",
+                "density_plot": f"{plots_url_base}/density_per_chrom.png?v={int(time.time())}"
+            }
         }
+
         analysis.status = 'COMPLETED'
         analysis.save()
+
 
         # -----------------------------
         # Criar TXT de relatório simplificado
