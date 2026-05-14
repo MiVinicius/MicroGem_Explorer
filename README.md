@@ -3,108 +3,122 @@
   MicroGen Explorer
 </h1>
 
-
-**Versão:** 1.2.0
+**Versão:** 1.2.0  
 **Domínio:** Bioinformática / Análise de Dados
 
-O MicroGen Explorer é uma ferramenta baseada em Django projetada para automatizar a análise de dados de variantes de Sequenciamento de Nova Geração (NGS) (arquivos VCF) para genomas bacterianos. Ele fornece métricas de Controle de Qualidade (CQ), análise química genômica (razão Ti/Tv), mapeamento de densidade mutacional e anotação funcional.
+O **MicroGen Explorer** é uma ferramenta baseada em Django projetada para automatizar a análise de dados de variantes de Sequenciamento de Nova Geração (NGS) (arquivos VCF) para genomas bacterianos. Ele fornece métricas de Controle de Qualidade (CQ), análise química genômica (razão Ti/Tv), mapeamento de densidade mutacional, anotação funcional e análise de hotspots de variantes.
 
 ## Funcionalidades
 
-1.  **Painel de CQ**:
-    *   Calcula o total de variantes, contagens de SNP/INDEL e pontuações médias de qualidade.
-    *   Identifica variantes de baixa qualidade (QUAL < 20).
-    *   Gera um histograma de Distribuição de Pontuação de Qualidade.
+1. **Painel de CQ**:
+   * Calcula o total de variantes, contagens de SNP/INDEL e pontuações médias de qualidade.
+   * Identifica variantes de baixa qualidade (QUAL < 20).
+   * Gera um histograma de Distribuição de Pontuação de Qualidade.
 
-2.  **Química Genômica**:
-    *   Classifica mutações em Transições (Ti) e Transversões (Tv).
-    *   Calcula a razão Ti/Tv para validar a qualidade dos dados biológicos.
+2. **Química Genômica**:
+   * Classifica mutações em Transições (Ti) e Transversões (Tv).
+   * Calcula a razão Ti/Tv para validar a qualidade dos dados biológicos.
 
-3.  **Visualização Genômica (IGV.js)**:
-    *   Visualizador de genoma integrado para explorar variantes no contexto.
-    *   Suporte a genoma de referência personalizado (upload de `.fasta`).
-    *   Sem FASTA: o IGV não é inicializado e é exibido um aviso solicitando o upload de um arquivo de referência.
+3. **Visualização Genômica (IGV.js)**:
+   * Visualizador de genoma integrado para explorar variantes no contexto.
+   * Suporte a genoma de referência personalizado (upload de `.fasta`).
+   * Sem FASTA: o IGV não é inicializado e é exibido um aviso solicitando o upload de um arquivo de referência.
 
-4.  **Gráficos e Tabelas Interativos**:
-    *   Tabela de variantes paginada e pesquisável (DataTables).
-    *   Gráficos dinâmicos de qualidade e densidade (Plotly.js) com zoom e hover.
+4. **Gráficos e Tabelas Interativos**:
+   * Tabela de variantes paginada e pesquisável (DataTables).
+   * Gráficos dinâmicos de qualidade e densidade (Plotly.js) com zoom e hover.
 
-5.  **Densidade Mutacional (Hotspots)**:
-    *   Realiza análise de janela deslizante (padrão 1kb) para identificar hotspots mutacionais.
-    *   Gera um gráfico de densidade visualizando contagens de variantes ao longo do genoma.
+5. **Densidade Mutacional (Hotspots)**:
+   * Realiza análise de janela deslizante (padrão 1kb) para identificar hotspots mutacionais.
+   * Gera um gráfico de densidade visualizando contagens de variantes ao longo do genoma.
+   * Calcula e exibe o número de hotspots encontrados na análise.
 
-6.  **Anotação Funcional**:
-    *   Mapeia variantes para genes usando arquivos GFF3.
-    *   Relata genes específicos afetados por mutações.
+6. **Anotação Funcional**:
+   * Mapeia variantes para genes usando arquivos GFF3.
+   * Relata genes específicos afetados por mutações.
 
+7. **Métricas Avançadas**:
+   * Mostra um conjunto completo de métricas de qualidade, incluindo:
+     - Número de variantes, SNPs, INDELs, e MNVs.
+     - Razão Ti/Tv.
+     - Hotspots mutacionais identificados.
+
+8. **Hotspots de Variantes**:
+   * Detecta regiões do genoma com alta concentração de variantes (hotspots).
+   * Exibe o número de variantes em cada hotspot.
+
+9. **Saída de Dados**:
+   * Relatórios gerados em formato .txt e .csv.
+   * Gráficos interativos e imagens para visualização rápida dos dados.
 
 ## Instalação
 
-1.  **Clone o repositório** (ou baixe o código-fonte).
-2.  **Crie um ambiente virtual**:
+1. **Clone o repositório** (ou baixe o código-fonte).
+2. **Crie um ambiente virtual**:
     ```bash
     python -m venv venv
     source venv/bin/activate  # No Windows: venv\Scripts\activate
     ```
-3.  **Instale as dependências**:
+3. **Instale as dependências**:
     ```bash
     pip install -r requirements.txt
     ```
     *Dependências incluem: Django, pandas, PyVCF3, matplotlib, seaborn.*
 
-4.  **Execute as Migrações**:
+4. **Execute as Migrações**:
     ```bash
     python manage.py migrate
     ```
+
 ## Uso
 
 A ferramenta é acessada através de uma interface web intuitiva.
 
-1.  **Inicie o Servidor**:
+1. **Inicie o Servidor**:
     ```bash
     python manage.py runserver
     ```
-2.  **Acesse o Painel**:
+2. **Acesse o Painel**:
     Abra seu navegador e vá para `http://127.0.0.1:8000/`.
 
-3.  **Criar Nova Análise**:
-    *   Clique em "Nova Análise".
-    *   Faça upload do seu arquivo VCF (obrigatório).
-    *   (Opcional) Faça upload de um arquivo GFF para anotação funcional.
-    *   (Opcional, recomendado) Faça upload de um arquivo FASTA para usar como genoma de referência no IGV.
-    *   Observação: para genomas bacterianos (ex.: *E. coli*), o IGV requer o arquivo FASTA de referência; IDs como "ecoli" não são suportados.
-    *   Defina o tamanho da janela para análise de densidade (padrão: 1000bp).
-    *   Clique em "Analisar".
+3. **Criar Nova Análise**:
+   * Clique em "Nova Análise".
+   * Faça upload do seu arquivo VCF (obrigatório).
+   * (Opcional) Faça upload de um arquivo GFF para anotação funcional.
+   * (Opcional, recomendado) Faça upload de um arquivo FASTA para usar como genoma de referência no IGV.
+   * Observação: para genomas bacterianos (ex.: *E. coli*), o IGV requer o arquivo FASTA de referência; IDs como "ecoli" não são suportados.
+   * Defina o tamanho da janela para análise de densidade (padrão: 1000bp).
+   * Clique em "Analisar".
 
-4.  **Visualizar Resultados**:
-    *   Após o processamento, você será redirecionado para a página de relatório detalhado.
-    *   Visualize métricas de CQ, gráficos de qualidade e densidade, e a tabela de anotações.
-    *   Baixe o CSV completo das anotações clicando em "Baixar CSV".
-    *   Baixe o relatório resumido clicando em "Baixar Relatório".
-    *   Navegue de volta para a lista de análises para ver o histórico.
+4. **Visualizar Resultados**:
+   * Após o processamento, você será redirecionado para a página de relatório detalhado.
+   * Visualize métricas de CQ, gráficos de qualidade e densidade, e a tabela de anotações.
+   * Baixe o CSV completo das anotações clicando em "Baixar CSV".
+   * Baixe o relatório resumido clicando em "Baixar Relatório".
+   * Navegue de volta para a lista de análises para ver o histórico.
 
 
 ## Saídas
 
 Os resultados são organizados por análise e acessíveis via interface web:
 
-*   **Relatório Web**: Visualização interativa de todas as métricas.
-*   **Gráficos Interativos**:
-    *   Distribuição de Qualidade (Histograma Plotly).
-    *   Densidade de Mutação (Gráfico de Linha Plotly).
-*   **Arquivos para Download**:
-    *   `variant_annotations.csv`: Lista completa de variantes e genes afetados.
-*   **Gráficos legados (a serem removidos em breve):**
-    *   Distribuição de Qualidade (Histograma formato imagem).
-    *   Densidade de Mutação (Gráfico de Linha formato imagem).
+* **Relatório Web**: Visualização interativa de todas as métricas.
+* **Gráficos Interativos**:
+   * Distribuição de Qualidade (Histograma Plotly).
+   * Densidade de Mutação (Gráfico de Linha Plotly).
+* **Arquivos para Download**:
+   * `variant_annotations.csv`: Lista completa de variantes e genes afetados.
+* **Gráficos legados (a serem removidos em breve):**
+   * Distribuição de Qualidade (Histograma formato imagem).
+   * Densidade de Mutação (Gráfico de Linha formato imagem).
 
 ## Estrutura do Projeto
 
-*   `analysis/`: App Django principal contendo a lógica (`vcf_analyzer.py`, `gff_parser.py`).
-*   `media/`: Armazena arquivos enviados pelo usuário (`uploads/`) e resultados gerados (`results/`).
-*   `manage.py`: Ponto de entrada do Django.
-*   `microgen_explorer/`: Contém arquivos de configuração do Django.
-*   `requirements.txt`: Lista de dependências do projeto.
+* `analysis/`: App Django principal contendo a lógica (`vcf_analyzer.py`, `gff_parser.py`).
+* `media/`: Armazena arquivos enviados pelo usuário (`uploads/`) e resultados gerados (`results/`).
+* `manage.py`: Ponto de entrada do Django.
+* `microgen_explorer/`: Contém arquivos de configuração do Django.
+* `requirements.txt`: Lista de dependências do projeto.
 
 ## Opcional (Converter FASTA para VCF):
   * Pipeline e script python para converter arquivos FASTA para VCF

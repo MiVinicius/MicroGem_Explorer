@@ -28,3 +28,6 @@ venv.bak/
 
 # Tests
 tests/
+
+# Novo Ambiente
+novo_ambiente/
